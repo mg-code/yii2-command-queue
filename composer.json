@@ -1,0 +1,30 @@
+{
+    "name": "mg-code/yii2-command-queue",
+    "description": "Provides ability to send console commands to queue and execute from CLI.",
+    "keywords": [
+        "yii2",
+        "extension",
+        "cli",
+        "command",
+        "queue"
+    ],
+    "homepage": "https://github.com/mg-code/yii2-command-queue",
+    "type": "yii2-extension",
+    "license": "BSD 3-Clause",
+    "authors": [
+        {
+            "name": "Maris Graudins",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "yiisoft/yii2": "*",
+        "mg-code/yii2-command-logger": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "mgcode\\cq\\": ""
+        }
+    }
+}
