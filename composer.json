@@ -20,6 +20,7 @@
     "minimum-stability": "dev",
     "require": {
         "yiisoft/yii2": "*",
+        "mg-code/yii2-helpers": "*",
         "mg-code/yii2-command-logger": "*"
     },
     "autoload": {
