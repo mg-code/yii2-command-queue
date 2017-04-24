@@ -16,6 +16,7 @@ class m170424_071044_create_command_queue_table extends Migration
             'action' => $this->string(255)->notNull(),
             'params' => $this->text()->notNull(),
             'process_pid' => $this->integer(11)->unsigned(),
+            'process_is_killed' => $this->boolean()->unsigned()->notNull()->defaultValue(0),
             'is_finished' => $this->boolean()->unsigned()->notNull()->defaultValue(0),
             'has_error' => $this->boolean()->unsigned()->notNull()->defaultValue(0),
             'error' => $this->text(),
