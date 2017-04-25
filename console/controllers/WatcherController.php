@@ -1,14 +1,16 @@
 <?php
-namespace mgcode\cq\console\controllers;
+namespace mgcode\cron\console\controllers;
 
 use mgcode\commandLogger\LoggingTrait;
-use mgcode\cq\common\models\CommandQueue;
-use mgcode\cq\console\Module;
+use mgcode\cron\common\models\CronSchedule;
+use mgcode\cron\console\Module;
 use mgcode\helpers\SystemHelper;
 use yii\console\Controller;
-use yii\helpers\Console;
-use yii\helpers\Json;
 
+/**
+ * Class WatcherController
+ * @property Module $module
+ */
 class WatcherController extends Controller
 {
     use LoggingTrait;
@@ -21,93 +23,62 @@ class WatcherController extends Controller
      */
     public function actionWatch()
     {
-        $this->msg('Watching for command queue.');
+        /** @var Module $module */
+        $module = $this->module;
 
-        while (memory_get_usage() / 1024 / 1024 < 32) {
-            $this->sendCommand();
+        $this->msg('Watching for cron queue.');
+        // Sends one command per loop to prevent running similar commands
+        while (memory_get_usage() / 1024 / 1024 < $module->watcherMemoryLimit) {
+            if ($schedule = $this->findNextSchedule()) {
+                $this->runInBackground($schedule);
+            }
             $this->sleep(5);
         }
-
         $this->msg('Process stopped.');
     }
 
-    /**
-     * Run command by its unique ID.
-     * @param $id
-     * @throws \Exception
-     */
-    public function actionRun($id)
-    {
-        $command = CommandQueue::find()->where(['id' => $id])->one();
-        if (!$command) {
-            throw new \Exception('Command not found');
-        }
-
-        if ($command->isRunning()) {
-            $this->msg('Command is already running.');
-            return;
-        }
-
-        $this->msg('Running command #{id}', ['id' => $command->id]);
-        $command->setIsRunning();
-
-        // Collect output
-        $trace = '';
-        $callback = function ($buffer) use (&$trace) {
-            $trace .= $buffer;
-            return $buffer;
-        };
-        ob_start($callback, 1);
-
-        // Execute command
-        try {
-            $params = Json::decode($command->params);
-            \Yii::$app->runAction($command->action, $params);
-            $command->setIsFinished($trace);
-        } catch (\Exception $e) {
-            $this->logException($e);
-            $error = $this->getMsgFromException($e);
-            $command->setHasError($error, $trace);
-        }
-        $this->msg('Finished');
-    }
-
-    /**
-     * Finds next command and executes it.
-     */
-    protected function sendCommand()
+    protected function findNextSchedule()
     {
         /** @var Module $module */
-        $module = \Yii::$app->getModule('command-queue');
+        $module = $this->module;
 
-        $runningCount = $this->getRunningCommandCount();
+        // Search for important command
+        $schedules = CronSchedule::find()->notStarted()->important()->all();
+        foreach ($schedules as $schedule) {
+            if (!$schedule->isSimilarCommandRunning()) {
+                return $schedule;
+            }
+        }
+
+        // Check concurrent command limit
+        $runningCount = $this->getRunningCommandsCount();
         if ($runningCount >= $module->maxConcurrentProcesses) {
             $this->msg('Max concurrent running commands reached.');
-            return;
+            return false;
         }
 
-        /** @var CommandQueue[] $commands */
-        $commands = CommandQueue::find()->notStarted()->orderBy(['id' => SORT_ASC])->each();
-        foreach ($commands as $command) {
-            if ($command->isSimilarCommandRunning()) {
-                continue;
+        // Find next command
+        $schedules = CronSchedule::find()->notStarted()->notImportant()->orderBy(['id' => SORT_ASC])->each();
+        foreach ($schedules as $schedule) {
+            if (!$schedule->isSimilarCommandRunning()) {
+                return $schedule;
             }
-
-            $this->runInBackground($command);
-            return;
         }
+
+        // No command found
+        return false;
     }
 
     /**
      * Returns count of running commands
      * @return int
      */
-    protected function getRunningCommandCount()
+    protected function getRunningCommandsCount()
     {
-        $commands = CommandQueue::find()->running()->all();
+        $commands = CronSchedule::find()->running()->all();
         $count = 0;
         foreach ($commands as $command) {
-            if ($command->isRunning()) {
+            if ($command->getIsRunning()) {
                 $count++;
             }
         }
@@ -115,15 +86,15 @@ class WatcherController extends Controller
     }
 
     /**
-     * Runs command in background
-     * @param CommandQueue $command
+     * Runs schedule in background
+     * @param CronSchedule $schedule
      */
-    protected function runInBackground(CommandQueue $command)
+    protected function runInBackground(CronSchedule $schedule)
     {
-        $this->msg('Executing command #{id} in background.', ['id' => $command->id]);
+        $this->msg('Sending schedule #{id} to background processing.', ['id' => $schedule->id]);
 
         $scriptFile = \Yii::$app->request->getScriptFile();
-        $cliCommand = "php {$scriptFile} command-queue/watcher/run {$command->id}";
+        $cliCommand = "php {$scriptFile} cron/runner/run {$schedule->id}";
         SystemHelper::runBackgroundCommand($cliCommand);
     }
 }

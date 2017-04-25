@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 
-class m170424_071047_create_cron_schedule_table extends Migration
+class m170424_071048_create_cron_schedule_table extends Migration
 {
     public function up()
     {
@@ -11,7 +11,7 @@ class m170424_071047_create_cron_schedule_table extends Migration
             $strOptions = 'CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE = MYISAM';
         }
         $this->createTable('{{%cron_schedule}}', [
-            'id' => $this->bigInteger(22)->unsigned()->notNull(),
+            'id' => $this->bigPrimaryKey(22)->unsigned(),
             'key' => $this->char(32)->notNull()->comment('Hash generated from action and params'),
             'action' => $this->string(255)->notNull(),
             'params' => $this->text()->notNull(),
@@ -23,13 +23,12 @@ class m170424_071047_create_cron_schedule_table extends Migration
             'is_failed' => $this->boolean()->unsigned()->notNull()->defaultValue(0),
             'created_by' => $this->string(64),
             'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
-            'killed_at' => $this->dateTime(),
             'started_at' => $this->dateTime(),
-            'finished_at' => $this->dateTime(),
+            'ended_at' => $this->dateTime(),
         ], $strOptions);
 
-        $this->addPrimaryKey('pk', '{{%cron_schedule}}', ['id']);
         $this->createIndex('I_key', '{{%cron_schedule}}', ['key']);
+        $this->createIndex('I_started_at', '{{%cron_schedule}}', ['started_at']);
     }
 
     public function down()
