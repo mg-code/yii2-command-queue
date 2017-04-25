@@ -63,11 +63,13 @@ class CommandQueue extends AbstractCommandQueue
 
     /**
      * Set command as finished
+     * @param string $trace
      */
-    public function setIsFinished()
+    public function setIsFinished($trace)
     {
         $this->resetValues(false);
         $this->is_finished = 1;
+        $this->trace = $trace;
         $this->finished_at = new Expression('NOW()');
         $this->saveOrFail(false);
     }
@@ -75,12 +77,14 @@ class CommandQueue extends AbstractCommandQueue
     /**
      * Saves command error
      * @param string $error
+     * @param string $trace
      */
-    public function setHasError($error)
+    public function setHasError($error, $trace)
     {
         $this->resetValues(false);
         $this->has_error = 1;
         $this->error = $error;
+        $this->trace = $trace;
         $this->saveOrFail(false);
     }
 
@@ -95,6 +99,7 @@ class CommandQueue extends AbstractCommandQueue
         $this->is_finished = 0;
         $this->has_error = 0;
         $this->error = null;
+        $this->trace = null;
         $this->finished_at = null;
         if ($resetStartedAt) {
             $this->started_at = null;

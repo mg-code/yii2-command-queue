@@ -6,6 +6,7 @@ use mgcode\cq\common\models\CommandQueue;
 use mgcode\cq\console\Module;
 use mgcode\helpers\SystemHelper;
 use yii\console\Controller;
+use yii\helpers\Console;
 use yii\helpers\Json;
 
 class WatcherController extends Controller
@@ -49,16 +50,25 @@ class WatcherController extends Controller
 
         $this->msg('Running command #{id}', ['id' => $command->id]);
         $command->setIsRunning();
+
+        // Collect output
+        $trace = '';
+        $callback = function ($buffer) use (&$trace) {
+            $trace .= $buffer;
+            return $buffer;
+        };
+        ob_start($callback, 1);
+
+        // Execute command
         try {
             $params = Json::decode($command->params);
             \Yii::$app->runAction($command->action, $params);
-            $command->setIsFinished();
+            $command->setIsFinished($trace);
         } catch (\Exception $e) {
             $this->logException($e);
             $error = $this->getMsgFromException($e);
-            $command->setHasError($error);
+            $command->setHasError($error, $trace);
         }
-
         $this->msg('Finished');
     }
 

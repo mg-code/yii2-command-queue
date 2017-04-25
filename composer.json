@@ -1,14 +1,14 @@
 {
-    "name": "mg-code/yii2-command-queue",
-    "description": "Provides ability to send console commands to queue and execute from CLI.",
+    "name": "mg-code/yii2-cron",
+    "description": "Yii2 cron manager. Has ability to send any command to background processing.",
     "keywords": [
         "yii2",
         "extension",
         "cli",
-        "command",
-        "queue"
+        "cron",
+        "manager"
     ],
-    "homepage": "https://github.com/mg-code/yii2-command-queue",
+    "homepage": "https://github.com/mg-code/yii2-cron",
     "type": "yii2-extension",
     "license": "BSD 3-Clause",
     "authors": [
@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-4": {
-            "mgcode\\cq\\": ""
+            "mgcode\\cron\\": ""
         }
     }
 }

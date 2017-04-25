@@ -16,6 +16,7 @@ use Yii;
  * @property integer $is_finished
  * @property integer $has_error
  * @property string $error
+ * @property string $trace
  * @property string $created_at
  * @property string $started_at
  * @property string $finished_at
@@ -35,7 +36,7 @@ abstract class AbstractCommandQueue extends \yii\db\ActiveRecord
     {
         return [
             [['key', 'action', 'params'], 'required'],
-            [['params', 'error'], 'string'],
+            [['params', 'error', 'trace'], 'string'],
             [['process_pid', 'process_is_killed', 'is_finished', 'has_error'], 'integer'],
             [['created_at', 'started_at', 'finished_at'], 'safe'],
             [['key'], 'string', 'max' => 32],
@@ -58,6 +59,7 @@ abstract class AbstractCommandQueue extends \yii\db\ActiveRecord
             'is_finished' => 'Is Finished',
             'has_error' => 'Has Error',
             'error' => 'Error',
+            'trace' => 'Trace',
             'created_at' => 'Created At',
             'started_at' => 'Started At',
             'finished_at' => 'Finished At',
