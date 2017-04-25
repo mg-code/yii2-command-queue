@@ -37,6 +37,10 @@ class WatcherController extends Controller
         $this->msg('Process stopped.');
     }
 
+    /**
+     * Finds next schedule to send to background processing.
+     * @return bool|CronSchedule False will be returned if no schedule found
+     */
     protected function findNextSchedule()
     {
         /** @var Module $module */
@@ -65,7 +69,7 @@ class WatcherController extends Controller
             }
         }
 
-        // No command found
+        // No schedule found
         return false;
     }
 
