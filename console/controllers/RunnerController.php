@@ -35,7 +35,7 @@ class RunnerController extends Controller
 
         // Save trace
         $callback = function ($buffer) use ($schedule) {
-            $trace = $schedule->trace.$buffer;
+            $trace = $schedule->trace."\r\n".$buffer;
             $schedule->updateTrace($trace);
             return $buffer;
         };

@@ -41,6 +41,10 @@ class CronSchedule extends AbstractCronSchedule
         $model->action = $action;
         $model->params = Json::encode($params);
         $model->is_important = (int) $isImportant;
+        if (\Yii::$app->has('user') && ($userId = \Yii::$app->user->id)) {
+            $model->created_by = $userId;
+        }
+
         $model->saveOrFail(false);
 
         return $model;
@@ -123,7 +127,7 @@ class CronSchedule extends AbstractCronSchedule
      */
     public function updateTrace($trace)
     {
-        $this->trace = $trace;
+        $this->trace = trim($trace);
         $this->saveOrFail(false, ['trace']);
     }
 
